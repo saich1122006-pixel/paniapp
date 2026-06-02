@@ -69,7 +69,7 @@
       [
         "./plugins/withGradleWrapper.js",
         {
-          "version": "8.10.2"
+          "version": "8.13"
         }
       ]
     ],

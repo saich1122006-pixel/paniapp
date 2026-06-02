@@ -23,4 +23,4 @@ const withGradleWrapper = (config, version) => {
   ]);
 };
 
-module.exports = (config, props) => withGradleWrapper(config, props?.version || '8.10.2');
+module.exports = (config, props) => withGradleWrapper(config, props?.version || '8.13');
