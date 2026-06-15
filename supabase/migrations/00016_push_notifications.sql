@@ -5,8 +5,8 @@
 -- ============================================================================
 
 -- 1. Rename fcm_token to push_token for semantic clarity (Expo Push)
-ALTER TABLE public.profiles
-RENAME COLUMN fcm_token TO push_token;
+-- ALTER TABLE public.profiles
+-- RENAME COLUMN fcm_token TO push_token;
 
 -- 2. Ensure pg_net extension is available for database webhooks
 CREATE EXTENSION IF NOT EXISTS pg_net;
@@ -50,7 +50,10 @@ BEGIN
     ),
     body := jsonb_build_object(
       'event_type', 'JOB_POSTED',
-      'record', row_to_json(NEW)
+      'record', row_to_json(NEW)::jsonb || jsonb_build_object(
+        'job_lat', ST_Y(NEW.job_location::geometry),
+        'job_lng', ST_X(NEW.job_location::geometry)
+      )
     )
   );
   

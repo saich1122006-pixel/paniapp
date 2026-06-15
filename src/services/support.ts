@@ -50,5 +50,19 @@ export async function createTicket(params: {
   if (error) {
     return { data: null, error: error.message };
   }
+
+  if (data?.id) {
+    supabase.functions.invoke('translate-content', {
+      body: {
+        table: 'support_tickets',
+        id: data.id,
+        textFields: { 
+          subject: params.subject,
+          description: params.description 
+        }
+      }
+    }).catch(console.error);
+  }
+
   return { data: data as SupportTicket, error: null };
 }

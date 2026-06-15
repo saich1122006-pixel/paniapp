@@ -8,13 +8,14 @@
     "scheme": "paniapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "PaniApp needs your location to find jobs and workers near you.",
         "NSCameraUsageDescription": "PaniApp needs camera access to upload payment screenshots."
       }
     },
     "android": {
+      "googleServicesFile": "./src/google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FF8F00",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -26,10 +27,16 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED"
       ],
       "config": {
         "googleMaps": {
@@ -63,13 +70,6 @@
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
           }
-        }
-      ],
-      "@react-native-community/datetimepicker",
-      [
-        "./plugins/withGradleWrapper.js",
-        {
-          "version": "8.13"
         }
       ]
     ],

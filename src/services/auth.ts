@@ -111,6 +111,18 @@ export async function createProfile(params: {
     if (error) {
       return { success: false, error: error.message };
     }
+
+    // Trigger translation asynchronously
+    if (params.fullName) {
+      supabase.functions.invoke('translate-content', {
+        body: {
+          table: 'profiles',
+          id: finalUserId,
+          textFields: { full_name: params.fullName }
+        }
+      }).catch(console.error);
+    }
+
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to create profile' };
@@ -142,6 +154,17 @@ export async function updateProfile(
     .from('profiles')
     .update(updates)
     .eq('id', userId);
+
+  // Trigger translation asynchronously if full_name is updated
+  if (!error && updates.full_name) {
+    supabase.functions.invoke('translate-content', {
+      body: {
+        table: 'profiles',
+        id: userId,
+        textFields: { full_name: updates.full_name }
+      }
+    }).catch(console.error);
+  }
 
   return { success: !error, error: error?.message };
 }

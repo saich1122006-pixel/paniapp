@@ -9,7 +9,7 @@ import { Colors, Spacing, Typography, BorderRadius, APP_CONFIG } from '@/constan
 import { useTranslation } from 'react-i18next';
 
 export default function JobDetailsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const params = useLocalSearchParams();
   const jobId = params.id as string;
   const [job, setJob] = useState<Job | null>(null);
@@ -81,12 +81,16 @@ export default function JobDetailsScreen() {
     );
   }
 
+  const appLang = i18n.language || 'en';
+  const title = (job as any).translations?.[appLang]?.work_name || job.work_name;
+  const workerName = job.worker ? ((job.worker as any).translations?.[appLang]?.full_name || (job.worker as any).full_name) : null;
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>{job.work_name}</Text>
+          <Text style={styles.title}>{title}</Text>
           <View style={styles.statusRow}>
             <Badge text={job.status} variant={statusVariant[job.status]} size="md" />
             <Text style={styles.dateText}>
@@ -107,13 +111,23 @@ export default function JobDetailsScreen() {
             <Text style={styles.detailLabel}>Estimated Time</Text>
             <Text style={styles.detailValue}>{job.estimated_hours} hours</Text>
           </View>
+
+          {job.work_date && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>{t('post_job.work_date') || "Work Date"}</Text>
+                <Text style={styles.detailValue}>{new Date(job.work_date).toLocaleDateString()}</Text>
+              </View>
+            </>
+          )}
           
           {job.worker && (
             <>
               <View style={styles.divider} />
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Assigned Worker</Text>
-                <Text style={styles.detailValue}>{(job.worker as any).full_name}</Text>
+                <Text style={styles.detailValue}>{workerName}</Text>
               </View>
             </>
           )}

@@ -161,7 +161,10 @@
     "recent_transactions": "Recent Transactions",
     "no_transactions": "No transactions yet",
     "complete_jobs_msg": "Complete jobs to earn money",
-    "loading": "Loading wallet..."
+    "loading": "Loading wallet...",
+    "payment_history": "Payment History",
+    "no_payments": "No Payments",
+    "payment_history_msg": "You haven't received any payments yet."
   },
   "recruiter_home": {
     "active_jobs": "Active Jobs",
@@ -173,11 +176,16 @@
     "applications": "Applications",
     "view_applicants": "View Applicants",
     "job_open": "OPEN",
-    "job_closed": "CLOSED"
+    "job_closed": "CLOSED",
+    "instant_workers": "Instant Workers",
+    "no_matched_jobs": "No matched jobs yet",
+    "no_completed_jobs": "No completed jobs yet",
+    "no_matched_jobs_msg": "Workers will appear here once they accept your jobs",
+    "no_completed_jobs_msg": "Completed jobs will appear here"
   },
   "recruiter_post_job": {
     "title": "Need Worker",
-    "job_title": "Job Title",
+    "job_title": "Work Name",
     "job_title_placeholder": "e.g., Construction Helper",
     "description": "Description",
     "description_placeholder": "Describe the work to be done...",
@@ -246,5 +254,80 @@
     "privacy_policy": "Privacy Policy",
     "terms_of_service": "Terms of Service",
     "contact_us": "Contact Us"
+  },
+  "transaction_status": {
+    "pending": "Pending",
+    "verified": "Verified",
+    "disputed": "Disputed"
+  },
+  "recruiter_wallet": {
+    "payment_history": "Payment History",
+    "no_payments": "No Payments",
+    "payment_history_msg": "You haven't made any payments yet."
+  },
+  "post_job": {
+    "amount_label": "Amount (₹)",
+    "amount_hint": "Total pay",
+    "hours_label": "Hours",
+    "hours_hint": "Est. duration",
+    "job_location_label": "JOB LOCATION",
+    "current_location": "Current Location",
+    "place_of_work": "Place of Work",
+    "manual_address": "Or enter address manually",
+    "work_date": "Work Date",
+    "workers_label": "Workers",
+    "workers_hint": "Total needed"
+  },
+  "find_workers": {
+    "ready_count": "{{count}} workers ready for work",
+    "search_title": "Search for workers",
+    "search_subtitle": "Type a name or skill to find workers ready for work"
+  },
+  "profile": {
+    "help_support": "Help & Support",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
+  },
+  "job": {
+    "for_hours": "for {{hours}} hrs"
+  },
+  "status": {
+    "open": "OPEN",
+    "matched": "MATCHED",
+    "completed": "COMPLETED",
+    "cancelled": "CANCELLED"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark all as read",
+    "empty_title": "No Notifications",
+    "empty_subtitle": "You have no notifications yet.",
+    "loading": "Loading notifications...",
+    "types": {
+      "job_accepted": {
+        "title": "Work Accepted!",
+        "body": "A worker has accepted your work: {{value}}"
+      },
+      "job_completed": {
+        "title": "Job Completed",
+        "body": "The job '{{value}}' has been marked as completed."
+      },
+      "job_posted": {
+        "title": "New Job Matching Your Skills!",
+        "body": "A new job '{{value}}' was posted near you. Tap to view."
+      },
+      "payment_received": {
+        "title": "Payment Received",
+        "body": "You received a payment of ₹{{value}}."
+      },
+      "payment_sent": {
+        "title": "Payment Sent",
+        "body": "You sent a payment of ₹{{value}}."
+      },
+      "general": {
+        "title": "Notification",
+        "body": "You have a new notification."
+      }
+    }
   }
 }

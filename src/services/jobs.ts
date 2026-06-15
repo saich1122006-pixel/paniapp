@@ -20,6 +20,7 @@ export interface Job {
   accepted_at: string | null;
   created_at: string;
   updated_at: string;
+  work_date: string | null;
   // Joined fields
   recruiter?: {
     full_name: string;
@@ -58,7 +59,7 @@ export async function getNearbyJobs(
     // Fallback: fetch all open jobs without geo filter
     const { data: fallbackData, error: fallbackError } = await supabase
       .from('jobs')
-      .select('*, recruiter:profiles!recruiter_id(full_name, phone_number)')
+      .select('*, recruiter:profiles!recruiter_id(full_name, phone_number, translations)')
       .eq('status', 'open')
       .gte('payment_amount', minAmount)
       .order('created_at', { ascending: false })
@@ -87,7 +88,7 @@ export async function getNearbyJobs(
 export async function getRecruiterJobs(recruiterId: string) {
   const { data, error } = await supabase
     .from('jobs')
-    .select('*, worker:profiles!accepted_by(full_name, phone_number)')
+    .select('*, worker:profiles!accepted_by(full_name, phone_number, translations)')
     .eq('recruiter_id', recruiterId)
     .order('created_at', { ascending: false });
 
@@ -102,7 +103,7 @@ export async function getWorkerJobs(workerId: string) {
   try {
     const { data, error } = await supabase
       .from('jobs')
-      .select('*, recruiter:profiles!recruiter_id(full_name, phone_number)')
+      .select('*, recruiter:profiles!recruiter_id(full_name, phone_number, translations)')
       .eq('accepted_by', workerId)
       .order('accepted_at', { ascending: false });
 
@@ -136,7 +137,7 @@ export async function getJob(jobId: string) {
     const { data, error } = await supabase
       .from('jobs')
       .select(
-        '*, recruiter:profiles!recruiter_id(full_name, phone_number), worker:profiles!accepted_by(full_name, phone_number)'
+        '*, recruiter:profiles!recruiter_id(full_name, phone_number, translations), worker:profiles!accepted_by(full_name, phone_number, translations)'
       )
       .eq('id', jobId)
       .single();
@@ -175,6 +176,8 @@ export async function createJob(params: {
   longitude?: number;
   locationAddress?: string;
   voiceNoteUrl?: string;
+  workDate?: string;
+  workerCount?: number;
 }) {
   const insertData: Record<string, any> = {
     recruiter_id: params.recruiterId,
@@ -183,6 +186,7 @@ export async function createJob(params: {
     estimated_hours: params.estimatedHours || null,
     location_address: params.locationAddress || null,
     voice_note_url: params.voiceNoteUrl || null,
+    work_date: params.workDate || null,
   };
 
   // Set job location as PostGIS geography point
@@ -190,14 +194,30 @@ export async function createJob(params: {
     insertData.job_location = `POINT(${params.longitude} ${params.latitude})`;
   }
 
+  const count = params.workerCount && params.workerCount > 0 ? params.workerCount : 1;
+  const jobsToInsert = Array(count).fill(insertData);
+
   const { data, error } = await supabase
     .from('jobs')
-    .insert(insertData)
-    .select()
-    .single();
+    .insert(jobsToInsert)
+    .select();
 
   if (error) return { data: null, error: error.message };
-  return { data, error: null };
+
+  // Trigger translation asynchronously for all created jobs
+  if (data && data.length > 0) {
+    data.forEach((job) => {
+      supabase.functions.invoke('translate-content', {
+        body: {
+          table: 'jobs',
+          id: job.id,
+          textFields: { work_name: params.workName }
+        }
+      }).catch(console.error);
+    });
+  }
+
+  return { data: data ? data[0] : null, error: null };
 }
 
 /**
@@ -212,6 +232,7 @@ export async function updateJob(
     latitude?: number;
     longitude?: number;
     locationAddress?: string;
+    workDate?: string;
   }
 ) {
   const updateData: Record<string, any> = {
@@ -219,6 +240,10 @@ export async function updateJob(
     payment_amount: params.paymentAmount,
     estimated_hours: params.estimatedHours || null,
   };
+
+  if (params.workDate !== undefined) {
+    updateData.work_date = params.workDate;
+  }
 
   if (params.locationAddress !== undefined) {
     updateData.location_address = params.locationAddress;
@@ -237,6 +262,18 @@ export async function updateJob(
     .single();
 
   if (error) return { data: null, error: error.message };
+
+  // Trigger translation asynchronously if workName is updated
+  if (data?.id && params.workName) {
+    supabase.functions.invoke('translate-content', {
+      body: {
+        table: 'jobs',
+        id: data.id,
+        textFields: { work_name: params.workName }
+      }
+    }).catch(console.error);
+  }
+
   return { data, error: null };
 }
 

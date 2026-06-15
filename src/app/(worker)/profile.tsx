@@ -265,23 +265,22 @@ export default function WorkerProfileScreen() {
         />
 
         {/* Support */}
-        <Button
-          title="Help & Support"
-          onPress={() => router.push('/(shared)/support')}
-          variant="secondary"
+        <Button 
+          title={`🎧 ${t('profile.help_support') || 'Help & Support'}`}
+          onPress={() => router.push('/(shared)/support' as any)}
+          variant="primary" 
           size="lg"
           style={{ marginTop: Spacing.md }}
-          icon={<Text style={{ fontSize: 16 }}>🎧</Text>}
         />
 
         {/* Legal Links */}
         <View style={styles.legalSection}>
           <TouchableOpacity onPress={() => router.push('/(shared)/terms-of-service')}>
-            <Text style={styles.legalLink}>Terms of Service</Text>
+            <Text style={styles.legalLink}>{t('profile.terms') || 'Terms of Service'}</Text>
           </TouchableOpacity>
           <Text style={styles.legalDivider}>•</Text>
           <TouchableOpacity onPress={() => router.push('/(shared)/privacy-policy')}>
-            <Text style={styles.legalLink}>Privacy Policy</Text>
+            <Text style={styles.legalLink}>{t('profile.privacy') || 'Privacy Policy'}</Text>
           </TouchableOpacity>
         </View>
 

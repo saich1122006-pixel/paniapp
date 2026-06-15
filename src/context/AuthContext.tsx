@@ -103,32 +103,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession()
-      .then(({ data: { session: s } }) => {
-        setSession(s);
-        setUser(s?.user ?? null);
-        if (!s) {
+    try {
+      supabase.auth.getSession()
+        .then(({ data: { session: s } }) => {
+          setSession(s);
+          setUser(s?.user ?? null);
+          if (!s) {
+            setAuthState('unauthenticated');
+          }
+        })
+        .catch((error) => {
+          console.error('AuthContext: Failed to fetch initial session', error);
           setAuthState('unauthenticated');
-        }
-      })
-      .catch((error) => {
-        console.error('AuthContext: Failed to fetch initial session', error);
-        setAuthState('unauthenticated');
-      });
+        });
+    } catch (error) {
+      console.error('AuthContext: Supabase not initialized properly', error);
+      setAuthState('unauthenticated');
+    }
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, s) => {
-        setSession(s);
-        setUser(s?.user ?? null);
-        if (!s) {
-          setAuthState('unauthenticated');
-          setProfile(null);
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      const { data } = supabase.auth.onAuthStateChange(
+        (_event, s) => {
+          setSession(s);
+          setUser(s?.user ?? null);
+          if (!s) {
+            setAuthState('unauthenticated');
+            setProfile(null);
+          }
         }
-      }
-    );
+      );
+      subscription = data.subscription;
+    } catch (error) {
+      console.error('AuthContext: Failed to set up auth listener', error);
+    }
 
-    return () => subscription.unsubscribe();
+    return () => subscription?.unsubscribe();
   }, []);
 
   // Load profile when user changes

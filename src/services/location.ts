@@ -53,6 +53,7 @@ export async function updateUserLocation(
   const { error } = await supabase
     .from('profiles')
     .update({ last_location: point })
+    .select('id, full_name, phone_number, is_online, desired_skills, min_wage_floor, last_location, translations')
     .eq('id', userId);
 
   return !error;
@@ -120,15 +121,40 @@ export async function getNearbyWorkers(
   });
 
   if (error) {
-    // Fallback without geo filtering
+    // Fallback: fetch online workers and calculate distance client-side
     const { data: fallbackData } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, full_name, phone_number, is_online, desired_skills, min_wage_floor, last_location, translations')
       .eq('role', 'worker')
       .eq('is_online', true)
       .limit(50);
 
-    return { data: fallbackData || [], error: null };
+    // Calculate distance client-side using Haversine and sort by distance
+    const workersWithDistance = (fallbackData || []).map((worker: any) => {
+      let distance_km: number | undefined;
+      if (worker.last_location && latitude && longitude) {
+        // Parse PostGIS geography point: "POINT(lng lat)" or SRID variant
+        const match = worker.last_location.match?.(/([-\d.]+)\s+([-\d.]+)/);
+        if (match) {
+          const workerLng = parseFloat(match[1]);
+          const workerLat = parseFloat(match[2]);
+          distance_km = calculateDistance(
+            { latitude, longitude },
+            { latitude: workerLat, longitude: workerLng }
+          );
+          distance_km = Math.round(distance_km * 10) / 10; // 1 decimal place
+        }
+      }
+      // Remove raw location data from the response
+      const { last_location, ...rest } = worker;
+      return { ...rest, distance_km };
+    }).sort((a: any, b: any) => {
+      const distA = a.distance_km ?? Infinity;
+      const distB = b.distance_km ?? Infinity;
+      return distA - distB;
+    });
+
+    return { data: workersWithDistance, error: null };
   }
 
   return { data: data || [], error: null };

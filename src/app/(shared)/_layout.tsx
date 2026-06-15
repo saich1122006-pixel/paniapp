@@ -18,6 +18,7 @@ export default function SharedLayout() {
       <Stack.Screen name="terms-of-service" />
       <Stack.Screen name="privacy-policy" />
       <Stack.Screen name="support" />
+      <Stack.Screen name="notifications" />
     </Stack>
   );
 }

@@ -3,38 +3,38 @@
 // Nearby jobs feed with search, skill filters, and pull-to-refresh
 // ============================================================================
 
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  RefreshControl,
-  TouchableOpacity,
-  StatusBar,
-  TextInput,
-  FlatList,
-} from 'react-native';
-import { router } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/context/AuthContext';
-import { getNearbyJobs, type Job } from '@/services/jobs';
-import { getCurrentLocation, type Coordinates } from '@/services/location';
-import { updateProfile } from '@/services/auth';
-import { supabase } from '@/services/supabase';
-import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import Card from '@/components/ui/Card';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import {
+  APP_CONFIG,
+  BorderRadius,
   Colors,
+  Shadows,
   Spacing,
   Typography,
-  BorderRadius,
-  Shadows,
-  APP_CONFIG,
 } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
+import { updateProfile } from '@/services/auth';
+import { getNearbyJobs, type Job } from '@/services/jobs';
+import { getCurrentLocation, type Coordinates } from '@/services/location';
+import { supabase } from '@/services/supabase';
+import { router } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  FlatList,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function WorkerHomeScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { profile } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function WorkerHomeScreen() {
     if (!profile?.id) return;
     const newStatus = !isOnline;
     setIsOnline(newStatus);
-    
+
     await updateProfile(profile.id, {
       is_online: newStatus,
     });
@@ -101,56 +101,62 @@ export default function WorkerHomeScreen() {
     return 'Good Evening';
   };
 
-  const renderJobCard = ({ item }: { item: Job }) => (
-    <Card
-      style={styles.jobCard}
-      onPress={() => router.push(`/(worker)/job-details/${item.id}` as any)}
-    >
-      <View style={styles.jobHeader}>
-        <View style={styles.jobTitleRow}>
-          <Text style={styles.jobTitle} numberOfLines={1}>
-            {item.work_name}
-          </Text>
-          <Badge
-            text={item.status.toUpperCase()}
-            variant={item.status === 'open' ? 'success' : 'neutral'}
-            size="sm"
-          />
-        </View>
-        <Text style={styles.jobWage}>
-          {APP_CONFIG.CURRENCY_SYMBOL}{item.payment_amount}
-          <Text style={styles.jobWageUnit}> for {item.estimated_hours} hrs</Text>
-        </Text>
-      </View>
+  const renderJobCard = ({ item }: { item: Job }) => {
+    const appLang = i18n.language || 'en';
+    const title = (item as any).translations?.[appLang]?.work_name || item.work_name;
+    const recruiterName = (item.recruiter as any)?.translations?.[appLang]?.full_name || (item.recruiter as any)?.full_name || 'Recruiter';
 
-      {item.recruiter && (
-        <View style={styles.recruiterRow}>
-          <Text style={styles.recruiterIcon}>👤</Text>
-          <Text style={styles.recruiterName} numberOfLines={1}>
-            {(item.recruiter as any).full_name || 'Recruiter'}
+    return (
+      <Card
+        style={styles.jobCard}
+        onPress={() => router.push(`/(worker)/job-details/${item.id}` as any)}
+      >
+        <View style={styles.jobHeader}>
+          <View style={styles.jobTitleRow}>
+            <Text style={styles.jobTitle} numberOfLines={1}>
+              {title}
+            </Text>
+            <Badge
+              text={t(`status.${item.status}`) || item.status.toUpperCase()}
+              variant={item.status === 'open' ? 'success' : 'neutral'}
+              size="sm"
+            />
+          </View>
+          <Text style={styles.jobWage}>
+            {APP_CONFIG.CURRENCY_SYMBOL}{item.payment_amount}
+            <Text style={styles.jobWageUnit}> {t('job.for_hours', { hours: item.estimated_hours })}</Text>
           </Text>
         </View>
-      )}
 
-      <View style={styles.jobFooter}>
-        <View style={[styles.jobMeta, { flex: 1 }]}>
-          <Text style={styles.metaIcon}>📍</Text>
-          <Text style={[styles.metaText, { flex: 1 }]} numberOfLines={1}>
-            {item.distance_km
-              ? `${item.distance_km.toFixed(1)} km ${t('worker_home.away')}`
-              : t('worker_home.nearby')}
-            {item.location_address ? ` • ${item.location_address}` : ''}
-          </Text>
+        {item.recruiter && (
+          <View style={styles.recruiterRow}>
+            <Text style={styles.recruiterIcon}>👤</Text>
+            <Text style={styles.recruiterName} numberOfLines={1}>
+              {recruiterName}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.jobFooter}>
+          <View style={[styles.jobMeta, { flex: 1 }]}>
+            <Text style={styles.metaIcon}>📍</Text>
+            <Text style={[styles.metaText, { flex: 1 }]} numberOfLines={1}>
+              {item.distance_km
+                ? `${item.distance_km.toFixed(1)} km ${t('worker_home.away')}`
+                : t('worker_home.nearby')}
+              {item.location_address ? ` • ${item.location_address}` : ''}
+            </Text>
+          </View>
+          <View style={styles.jobMeta}>
+            <Text style={styles.metaIcon}>🕐</Text>
+            <Text style={styles.metaText}>
+              {getTimeAgo(item.created_at, t)}
+            </Text>
+          </View>
         </View>
-        <View style={styles.jobMeta}>
-          <Text style={styles.metaIcon}>🕐</Text>
-          <Text style={styles.metaText}>
-            {getTimeAgo(item.created_at, t)}
-          </Text>
-        </View>
-      </View>
-    </Card>
-  );
+      </Card>
+    )
+  };
 
   if (loading) {
     return <LoadingSpinner fullScreen message={t('worker_home.finding_jobs')} />;
@@ -162,28 +168,35 @@ export default function WorkerHomeScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.greeting}>{t('home.worker_dashboard')}</Text>
           <Text style={styles.userName}>{t('home.greeting', { name: profile?.full_name || 'Worker' })}</Text>
         </View>
+        <TouchableOpacity 
+          style={styles.notificationBtn} 
+          activeOpacity={0.7}
+          onPress={() => router.push('/(shared)/notifications')}
+        >
+          <Ionicons name="notifications-outline" size={24} color={Colors.neutral[700]} />
+        </TouchableOpacity>
       </View>
 
       {/* BIG Available for Work Toggle */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.bigToggleCard, isOnline ? styles.bigToggleActive : styles.bigToggleInactive]}
         onPress={handleToggleOnline}
         activeOpacity={0.9}
       >
         <View style={styles.bigToggleContent}>
           <View style={[styles.switchTrack, isOnline ? styles.switchTrackActive : styles.switchTrackInactive, { marginBottom: Spacing.md }]}>
-             <View style={[styles.switchThumb, isOnline ? styles.switchThumbActive : styles.switchThumbInactive]} />
+            <View style={[styles.switchThumb, isOnline ? styles.switchThumbActive : styles.switchThumbInactive]} />
           </View>
           <Text style={[styles.bigToggleTitle, isOnline ? styles.bigToggleTitleActive : styles.bigToggleTitleInactive]}>
             {isOnline ? t('worker_profile.available_for_work') : t('worker_home.now_unavailable')}
           </Text>
           <Text style={[styles.bigToggleSubtitle, isOnline ? styles.bigToggleSubtitleActive : styles.bigToggleSubtitleInactive]}>
-            {isOnline 
-              ? t('worker_profile.recruiters_can_find') 
+            {isOnline
+              ? t('worker_profile.recruiters_can_find')
               : t('worker_home.turn_on_to_get_jobs', 'Turn on to let recruiters find you')}
           </Text>
         </View>
@@ -269,7 +282,16 @@ const styles = StyleSheet.create({
     color: Colors.light.textPrimary,
     marginTop: Spacing.xxs,
   },
-  
+  notificationBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.neutral[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+
   // Big Toggle
   bigToggleCard: {
     marginHorizontal: Spacing['2xl'],

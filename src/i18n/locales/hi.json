@@ -161,7 +161,10 @@
     "recent_transactions": "हाल के लेनदेन",
     "no_transactions": "अभी तक कोई लेनदेन नहीं",
     "complete_jobs_msg": "पैसे कमाने के लिए नौकरियां पूरी करें",
-    "loading": "वॉलेट लोड हो रहा है..."
+    "loading": "वॉलेट लोड हो रहा है...",
+    "payment_history": "भुगतान इतिहास",
+    "no_payments": "कोई भुगतान नहीं",
+    "payment_history_msg": "आपको अभी तक कोई भुगतान नहीं मिला है।"
   },
   "recruiter_home": {
     "active_jobs": "सक्रिय नौकरियां",
@@ -173,11 +176,16 @@
     "applications": "आवेदन",
     "view_applicants": "आवेदक देखें",
     "job_open": "खुला",
-    "job_closed": "बंद"
+    "job_closed": "बंद",
+    "instant_workers": "तुरंत कर्मचारी",
+    "no_matched_jobs": "अभी तक कोई मैच नहीं हुआ",
+    "no_completed_jobs": "अभी तक कोई काम पूरा नहीं हुआ",
+    "no_matched_jobs_msg": "जब कर्मचारी आपकी नौकरी स्वीकार करेंगे तो यहाँ दिखाई देंगे",
+    "no_completed_jobs_msg": "पूरी हुई नौकरियां यहाँ दिखाई देंगी"
   },
   "recruiter_post_job": {
     "title": "कर्मचारी चाहिए",
-    "job_title": "नौकरी का शीर्षक",
+    "job_title": "काम का नाम",
     "job_title_placeholder": "उदा., निर्माण सहायक",
     "description": "विवरण",
     "description_placeholder": "किए जाने वाले कार्य का वर्णन करें...",
@@ -246,5 +254,80 @@
     "privacy_policy": "गोपनीयता नीति",
     "terms_of_service": "सेवा की शर्तें",
     "contact_us": "संपर्क करें"
+  },
+  "transaction_status": {
+    "pending": "लंबित",
+    "verified": "सत्यापित",
+    "disputed": "विवादित"
+  },
+  "recruiter_wallet": {
+    "payment_history": "भुगतान इतिहास",
+    "no_payments": "कोई भुगतान नहीं",
+    "payment_history_msg": "आपने अभी तक कोई भुगतान नहीं किया है।"
+  },
+  "post_job": {
+    "amount_label": "राशि (₹)",
+    "amount_hint": "कुल वेतन",
+    "hours_label": "घंटे",
+    "hours_hint": "अनुमानित अवधि",
+    "job_location_label": "नौकरी का स्थान",
+    "current_location": "वर्तमान स्थान",
+    "place_of_work": "काम करने की जगह",
+    "manual_address": "या मैन्युअल रूप से पता दर्ज करें",
+    "work_date": "काम की तारीख",
+    "workers_label": "कर्मचारी",
+    "workers_hint": "कुल आवश्यकता"
+  },
+  "find_workers": {
+    "ready_count": "काम के लिए तैयार {{count}} कर्मचारी",
+    "search_title": "कर्मचारियों की खोज करें",
+    "search_subtitle": "कर्मचारियों को खोजने के लिए कोई नाम या कौशल टाइप करें"
+  },
+  "profile": {
+    "help_support": "सहायता और समर्थन",
+    "terms": "सेवा की शर्तें",
+    "privacy": "गोपनीयता नीति"
+  },
+  "job": {
+    "for_hours": "{{hours}} घंटे के लिए"
+  },
+  "status": {
+    "open": "खुला",
+    "matched": "मैच हो गया",
+    "completed": "पूरा हो गया",
+    "cancelled": "रद्द"
+  },
+  "notifications": {
+    "title": "सूचनाएं",
+    "mark_all_read": "सभी को पढ़ा हुआ चिह्नित करें",
+    "empty_title": "कोई सूचना नहीं",
+    "empty_subtitle": "आपके पास अभी तक कोई सूचना नहीं है।",
+    "loading": "सूचनाएं लोड हो रही हैं...",
+    "types": {
+      "job_accepted": {
+        "title": "काम स्वीकार कर लिया गया!",
+        "body": "एक कर्मचारी ने आपका काम स्वीकार कर लिया है: {{value}}"
+      },
+      "job_completed": {
+        "title": "काम पूरा हुआ",
+        "body": "काम '{{value}}' को पूरा हुआ चिह्नित कर दिया गया है।"
+      },
+      "job_posted": {
+        "title": "आपके कौशल से मेल खाता नया काम!",
+        "body": "आपके पास एक नया काम '{{value}}' पोस्ट किया गया था। देखने के लिए टैप करें।"
+      },
+      "payment_received": {
+        "title": "भुगतान प्राप्त हुआ",
+        "body": "आपको ₹{{value}} का भुगतान प्राप्त हुआ है।"
+      },
+      "payment_sent": {
+        "title": "भुगतान भेजा गया",
+        "body": "आपने ₹{{value}} का भुगतान भेजा है।"
+      },
+      "general": {
+        "title": "सूचना",
+        "body": "आपके पास एक नई सूचना है।"
+      }
+    }
   }
 }

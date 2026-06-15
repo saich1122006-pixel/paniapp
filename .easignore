@@ -1,0 +1,12 @@
+# EAS Build ignore file
+# Inherits from .gitignore, add extra exclusions here
+
+# Backup folders with locked Gradle files
+android_backup/
+
+# IDE
+.idea/
+.vscode/
+
+# Git
+.git/

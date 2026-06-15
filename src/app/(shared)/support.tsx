@@ -10,7 +10,7 @@ import Badge from '@/components/ui/Badge';
 import { Colors, Spacing, Typography, BorderRadius } from '@/constants/theme';
 
 export default function SupportScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { profile } = useAuth();
   const params = useLocalSearchParams();
   
@@ -128,10 +128,15 @@ export default function SupportScreen() {
       ) : tickets.length === 0 ? (
         <Text style={styles.emptyText}>{t('support.no_tickets')}</Text>
       ) : (
-        tickets.map((ticket) => (
+        tickets.map((ticket) => {
+          const appLang = i18n.language || 'en';
+          const subject = (ticket as any).translations?.[appLang]?.subject || ticket.subject;
+          const description = (ticket as any).translations?.[appLang]?.description || ticket.description;
+
+          return (
           <Card key={ticket.id} style={styles.ticketCard}>
             <View style={styles.ticketHeader}>
-              <Text style={styles.ticketSubject}>{ticket.subject}</Text>
+              <Text style={styles.ticketSubject}>{subject}</Text>
               <Badge 
                 text={ticket.status.replace('_', ' ').toUpperCase()} 
                 variant={statusVariant[ticket.status] || 'neutral'} 
@@ -141,10 +146,10 @@ export default function SupportScreen() {
               {new Date(ticket.created_at).toLocaleDateString()}
             </Text>
             <Text style={styles.ticketDesc} numberOfLines={2}>
-              {ticket.description}
+              {description}
             </Text>
           </Card>
-        ))
+        )})
       )}
     </ScrollView>
   );

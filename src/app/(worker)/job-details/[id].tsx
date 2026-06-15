@@ -10,7 +10,7 @@ import { Colors, Spacing, Typography, BorderRadius, APP_CONFIG } from '@/constan
 import { useTranslation } from 'react-i18next';
 
 export default function WorkerJobDetailsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { profile } = useAuth();
   const params = useLocalSearchParams();
   const jobId = params.id as string;
@@ -104,12 +104,16 @@ export default function WorkerJobDetailsScreen() {
 
   const isOpen = job.status === 'open';
 
+  const appLang = i18n.language || 'en';
+  const title = (job as any).translations?.[appLang]?.work_name || job.work_name;
+  const recruiterName = job.recruiter ? ((job.recruiter as any).translations?.[appLang]?.full_name || (job.recruiter as any).full_name) : 'Recruiter';
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>{job.work_name}</Text>
+          <Text style={styles.title}>{title}</Text>
           <View style={styles.statusRow}>
             <Badge text={job.status.toUpperCase()} variant={statusVariant[job.status] || 'neutral'} size="md" />
             <Text style={styles.dateText}>
@@ -136,6 +140,16 @@ export default function WorkerJobDetailsScreen() {
             <Text style={styles.detailValue}>{job.estimated_hours} hours</Text>
           </View>
           
+          {job.work_date && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>{t('post_job.work_date') || "Work Date"}</Text>
+                <Text style={styles.detailValue}>{new Date(job.work_date).toLocaleDateString()}</Text>
+              </View>
+            </>
+          )}
+          
           <View style={styles.divider} />
           <View style={[styles.detailRow, { alignItems: 'flex-start' }]}>
             <Text style={styles.detailLabel}>{t('worker_job_details.location') || 'Location'}</Text>
@@ -159,7 +173,7 @@ export default function WorkerJobDetailsScreen() {
               <View style={styles.divider} />
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>{t('worker_job_details.recruiter') || 'Recruiter'}</Text>
-                <Text style={styles.detailValue}>{(job.recruiter as any).full_name}</Text>
+                <Text style={styles.detailValue}>{recruiterName}</Text>
               </View>
               {(job.status === 'matched' || job.status === 'completed') && (job.recruiter as any).phone_number && (
                 <>

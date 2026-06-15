@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "813283185335",
+    "project_id": "paniapp-492a6",
+    "storage_bucket": "paniapp-492a6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:813283185335:android:9249c80cade9ae34683332",
+        "android_client_info": {
+          "package_name": "com.saich11.paniapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCes-HDlZw7bvlxuFj0b_NqD1QDP6lq7ZU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

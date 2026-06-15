@@ -170,7 +170,7 @@ export default function RecruiterProfileScreen() {
 
         {/* Support */}
         <Button
-          title="Help & Support"
+          title={t('profile.help_support')}
           onPress={() => router.push('/(shared)/support')}
           variant="secondary"
           size="lg"
@@ -181,11 +181,11 @@ export default function RecruiterProfileScreen() {
         {/* Legal Links */}
         <View style={styles.legalSection}>
           <TouchableOpacity onPress={() => router.push('/(shared)/terms-of-service')}>
-            <Text style={styles.legalLink}>Terms of Service</Text>
+            <Text style={styles.legalLink}>{t('profile.terms')}</Text>
           </TouchableOpacity>
           <Text style={styles.legalDivider}>•</Text>
           <TouchableOpacity onPress={() => router.push('/(shared)/privacy-policy')}>
-            <Text style={styles.legalLink}>Privacy Policy</Text>
+            <Text style={styles.legalLink}>{t('profile.privacy')}</Text>
           </TouchableOpacity>
         </View>
 

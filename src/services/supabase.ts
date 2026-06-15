@@ -6,8 +6,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;// In-memory backup storage to bypass broken native modules in local emulators or older Expo environments.
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'dummy_key';
+
+if (supabaseUrl === 'https://dummy.supabase.co') {
+  console.error(
+    '⚠️ SUPABASE CONFIG MISSING: Environment variables are not set. ' +
+    'The app will not be able to connect to the backend.'
+  );
+}// In-memory backup storage to bypass broken native modules in local emulators or older Expo environments.
 const memoryStorage: Record<string, string> = {};
 
 // Custom safe storage adapter to prevent uncaught promise rejections.

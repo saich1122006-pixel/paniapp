@@ -12,7 +12,9 @@ import {
   Alert,
   StatusBar,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
+import SimpleDatePicker from '@/components/ui/SimpleDatePicker';
 import { router } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { createJob } from '@/services/jobs';
@@ -38,8 +40,12 @@ export default function PostJobScreen() {
     latitude: number;
     longitude: number;
     address: string;
+    address: string;
   } | null>(null);
   const [manualAddress, setManualAddress] = useState('');
+  const [workDate, setWorkDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [workerCount, setWorkerCount] = useState('1');
 
   const handleUseCurrentLocation = async () => {
     setIsGettingLocation(true);
@@ -69,6 +75,10 @@ export default function PostJobScreen() {
     }
     if (!estimatedHours || parseFloat(estimatedHours) <= 0) {
       Alert.alert('Required', 'Please enter estimated hours');
+      return;
+    }
+    if (!workerCount || parseInt(workerCount) < 1) {
+      Alert.alert('Required', 'Please enter a valid number of workers');
       return;
     }
 
@@ -112,6 +122,8 @@ export default function PostJobScreen() {
       latitude,
       longitude,
       locationAddress,
+      workDate: workDate.toISOString(),
+      workerCount: parseInt(workerCount),
     });
 
     setLoading(false);
@@ -123,6 +135,7 @@ export default function PostJobScreen() {
       setWorkName('');
       setPaymentAmount('');
       setEstimatedHours('');
+      setWorkerCount('1');
       setManualAddress('');
       setSelectedLocation(null);
     } else {
@@ -158,36 +171,81 @@ export default function PostJobScreen() {
           <View style={{ flexDirection: 'row', gap: Spacing.md }}>
             <View style={{ flex: 1 }}>
               <Input
-                label={`Amount (${APP_CONFIG.CURRENCY_SYMBOL})`}
+                label={t('post_job.amount_label') || `Amount (${APP_CONFIG.CURRENCY_SYMBOL})`}
                 placeholder="e.g., 600"
                 value={paymentAmount}
                 onChangeText={(text) => setPaymentAmount(text.replace(/[^0-9.]/g, ''))}
                 keyboardType="numeric"
                 size="lg"
-                hint="Total pay"
+                hint={t('post_job.amount_hint') || "Total pay"}
               />
             </View>
             <View style={{ flex: 1 }}>
               <Input
-                label="Hours"
+                label={t('post_job.hours_label') || "Hours"}
                 placeholder="e.g., 4"
                 value={estimatedHours}
                 onChangeText={(text) => setEstimatedHours(text.replace(/[^0-9.]/g, ''))}
                 keyboardType="numeric"
                 size="lg"
-                hint="Est. duration"
+                hint={t('post_job.hours_hint') || "Est. duration"}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Input
+                label={t('post_job.workers_label') || "Workers"}
+                placeholder="e.g., 5"
+                value={workerCount}
+                onChangeText={(text) => setWorkerCount(text.replace(/[^0-9]/g, ''))}
+                keyboardType="numeric"
+                size="lg"
+                hint={t('post_job.workers_hint') || "Total needed"}
               />
             </View>
           </View>
 
+          {/* Work Date */}
+          <View style={{ marginBottom: Spacing.md, marginTop: Spacing.sm }}>
+            <Text style={[styles.sectionLabel, { marginBottom: Spacing.sm }]}>
+              {t('post_job.work_date') || "WORK DATE"}
+            </Text>
+            <TouchableOpacity 
+              style={{
+                backgroundColor: Colors.neutral[50],
+                padding: Spacing.md,
+                borderRadius: BorderRadius.md,
+                borderWidth: 1,
+                borderColor: Colors.neutral[200],
+              }}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={{ fontSize: Typography.size.md, color: Colors.neutral[700] }}>
+                📅 {workDate.toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+
+            {showDatePicker && (
+              <SimpleDatePicker
+                value={workDate}
+                minimumDate={new Date()}
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (event.type === 'set' && selectedDate) {
+                    setWorkDate(selectedDate);
+                  }
+                }}
+              />
+            )}
+          </View>
+
           {/* Location */}
           <View style={styles.locationHeaderRow}>
-            <Text style={styles.sectionLabel}>Job Location</Text>
+            <Text style={styles.sectionLabel}>{t('post_job.job_location_label') || "JOB LOCATION"}</Text>
           </View>
           
           <View style={{ flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md }}>
             <Button
-              title="📍 Current Location"
+              title={`📍 ${t('post_job.current_location') || "Current Location"}`}
               onPress={handleUseCurrentLocation}
               loading={isGettingLocation}
               variant="outline"
@@ -195,7 +253,7 @@ export default function PostJobScreen() {
               size="sm"
             />
             <Button
-              title="🗺️ Place of Work"
+              title={`🗺️ ${t('post_job.place_of_work') || "Place of Work"}`}
               onPress={() => setIsPickerVisible(true)}
               variant="outline"
               style={{ flex: 1 }}
@@ -216,7 +274,7 @@ export default function PostJobScreen() {
 
           <View style={{ marginTop: Spacing.sm }}>
             <Input
-              label="Or enter address manually"
+              label={t('post_job.manual_address') || "Or enter address manually"}
               placeholder="e.g., 123 Main St, City"
               value={manualAddress}
               onChangeText={setManualAddress}
@@ -233,7 +291,10 @@ export default function PostJobScreen() {
               <Text style={styles.previewJobName}>{workName}</Text>
               <Text style={styles.previewWage}>
                 {APP_CONFIG.CURRENCY_SYMBOL}{paymentAmount}
-                <Text style={styles.previewWageUnit}> for {estimatedHours} hrs</Text>
+                <Text style={styles.previewWageUnit}> for {estimatedHours} hrs ({workerCount} worker{parseInt(workerCount) > 1 ? 's' : ''})</Text>
+              </Text>
+              <Text style={styles.previewRecruiter}>
+                📅 {workDate.toLocaleDateString()}
               </Text>
               <Text style={styles.previewRecruiter}>
                 Posted by {profile?.full_name || 'You'}

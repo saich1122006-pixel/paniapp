@@ -59,11 +59,17 @@ export const usePushNotifications = (): PushNotificationState => {
       }
 
       try {
+        const projectId =
+          Constants?.expoConfig?.extra?.eas?.projectId ??
+          Constants?.easConfig?.projectId;
+        if (!projectId) {
+          console.warn('Project ID not found in app config');
+        }
         token = await Notifications.getExpoPushTokenAsync({
-          projectId: Constants.expoConfig?.extra?.eas?.projectId || undefined,
+          projectId,
         });
       } catch (e) {
-        console.warn('Failed to get push token. You may be running in Expo Go which no longer supports push notifications.', e);
+        console.warn('Failed to get push token.', e);
       }
     } else {
       console.log('Must be using a physical device for Push Notifications');

@@ -30,15 +30,17 @@ serve(async (req) => {
         messages.push({
           to: recruiter.push_token,
           sound: "default",
-          title: recruiter.app_language === 'te' ? "పని అంగీకరించబడింది!" : "Job Accepted!",
-          body: `A worker has accepted your job: ${record.work_name}. Open the app to view details.`,
+          title: recruiter.app_language === 'te' ? "పని అంగీకరించబడింది!" : 
+                 recruiter.app_language === 'hi' ? "काम स्वीकार कर लिया गया!" : 
+                 "Work Accepted!",
+          body: `A worker has accepted your work: ${record.work_name}. Open the app to view details.`,
           data: { jobId: record.id, type: "JOB_ACCEPTED" },
         });
       }
     } else if (event_type === "JOB_POSTED") {
       // Find matching workers
-      const jobLat = record.job_location.coordinates[1];
-      const jobLng = record.job_location.coordinates[0];
+      const jobLat = record.job_lat;
+      const jobLng = record.job_lng;
 
       // Use the existing Postgres function or run a custom query
       // To keep it simple, we can call a custom RPC or just write the PostGIS query here
@@ -58,8 +60,10 @@ serve(async (req) => {
           messages.push({
             to: worker.push_token,
             sound: "default",
-            title: worker.app_language === 'te' ? "కొత్త పని అందుబాటులో ఉంది!" : "New Job Matching Your Skills!",
-            body: `A new job "${record.work_name}" was posted near you. Tap to view.`,
+            title: worker.app_language === 'te' ? "కొత్త పని అందుబాటులో ఉంది!" : 
+                   worker.app_language === 'hi' ? "आपके कौशल से मेल खाता नया काम!" : 
+                   "New Work Matching Your Skills!",
+            body: `A new work "${record.work_name}" was posted near you. Tap to view.`,
             data: { jobId: record.id, type: "JOB_POSTED" },
           });
         });

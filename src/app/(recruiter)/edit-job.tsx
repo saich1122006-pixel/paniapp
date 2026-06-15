@@ -12,8 +12,10 @@ import {
   Alert,
   StatusBar,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
+import SimpleDatePicker from '@/components/ui/SimpleDatePicker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { updateJob, getJob } from '@/services/jobs';
@@ -45,6 +47,8 @@ export default function EditJobScreen() {
   } | null>(null);
   const [currentAddress, setCurrentAddress] = useState<string | null>(null);
   const [manualAddress, setManualAddress] = useState('');
+  const [workDate, setWorkDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     if (!jobId) {
@@ -67,6 +71,9 @@ export default function EditJobScreen() {
       if (data.location_address) {
         setCurrentAddress(data.location_address);
         setManualAddress(data.location_address);
+      }
+      if (data.work_date) {
+        setWorkDate(new Date(data.work_date));
       }
       
       // Parse job location if available (assuming it returns as a WKB or object, we might need a separate call or just use empty if not decoded. Wait, getJob returns the job_location, but ST_AsText is not called in getJob unless we changed it. Actually let's assume it doesn't decode it easily, we'll just not pre-fill location map unless we have lat/lng directly. For simplicity, we can let them re-select or keep existing if not selected.)
@@ -136,6 +143,7 @@ export default function EditJobScreen() {
       latitude,
       longitude,
       locationAddress,
+      workDate: workDate.toISOString(),
     });
 
     setLoading(false);
@@ -175,7 +183,7 @@ export default function EditJobScreen() {
         {/* Form Card */}
         <Card style={styles.formCard}>
           <Input
-            label={t('recruiter_post_job.job_title', 'Job Title')}
+            label={t('recruiter_post_job.job_title', 'Work Name')}
             placeholder={t('recruiter_post_job.job_title_placeholder', 'e.g., Construction Helper')}
             value={workName}
             onChangeText={setWorkName}
@@ -205,6 +213,40 @@ export default function EditJobScreen() {
                 hint="Est. duration"
               />
             </View>
+          </View>
+
+          {/* Work Date */}
+          <View style={{ marginBottom: Spacing.md, marginTop: Spacing.sm }}>
+            <Text style={[styles.sectionLabel, { marginBottom: Spacing.sm }]}>
+              {t('post_job.work_date') || "WORK DATE"}
+            </Text>
+            <TouchableOpacity 
+              style={{
+                backgroundColor: Colors.neutral[50],
+                padding: Spacing.md,
+                borderRadius: BorderRadius.md,
+                borderWidth: 1,
+                borderColor: Colors.neutral[200],
+              }}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={{ fontSize: Typography.size.md, color: Colors.neutral[700] }}>
+                📅 {workDate.toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+
+            {showDatePicker && (
+              <SimpleDatePicker
+                value={workDate}
+                minimumDate={new Date()}
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (event.type === 'set' && selectedDate) {
+                    setWorkDate(selectedDate);
+                  }
+                }}
+              />
+            )}
           </View>
 
           {/* Location */}
@@ -261,6 +303,9 @@ export default function EditJobScreen() {
               <Text style={styles.previewWage}>
                 {APP_CONFIG.CURRENCY_SYMBOL}{paymentAmount}
                 <Text style={styles.previewWageUnit}> for {estimatedHours} hrs</Text>
+              </Text>
+              <Text style={styles.previewRecruiter}>
+                📅 {workDate.toLocaleDateString()}
               </Text>
               <Text style={styles.previewRecruiter}>
                 Posted by {profile?.full_name || 'You'}

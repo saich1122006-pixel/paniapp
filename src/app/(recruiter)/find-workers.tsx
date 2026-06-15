@@ -16,6 +16,7 @@ import {
   Alert,
 } from 'react-native';
 import { getCurrentLocation, getNearbyWorkers } from '@/services/location';
+import { supabase } from '@/services/supabase';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
@@ -31,16 +32,27 @@ interface Worker {
   desired_skills: string[];
   min_wage_floor: number;
   distance_km?: number;
+  translations?: Record<string, any>;
 }
 
 export default function FindWorkersScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [allOnlineCount, setAllOnlineCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchWorkers = useCallback(async () => {
+    // Fetch total count of ALL online workers (no radius filter)
+    const { count } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'worker')
+      .eq('is_online', true);
+    setAllOnlineCount(count || 0);
+
+    // Fetch nearby workers with distance for search results
     const coords = await getCurrentLocation();
     const result = await getNearbyWorkers(
       coords?.latitude || 0,
@@ -85,14 +97,21 @@ export default function FindWorkersScreen() {
     return SKILL_CATEGORIES.find((s) => s.id === skillId)?.icon || '🛠️';
   };
 
-  const filteredWorkers = workers.filter((worker) => {
-    if (!worker.is_online) return false;
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    const nameMatch = worker.full_name?.toLowerCase().includes(q);
-    const skillMatch = worker.desired_skills?.some(s => getSkillLabel(s).toLowerCase().includes(q));
-    return nameMatch || skillMatch;
-  });
+  const filteredWorkers = workers
+    .filter((worker) => {
+      if (!worker.is_online) return false;
+      if (!searchQuery.trim()) return false;
+      const q = searchQuery.toLowerCase();
+      const nameMatch = worker.full_name?.toLowerCase().includes(q);
+      const skillMatch = worker.desired_skills?.some(s => getSkillLabel(s).toLowerCase().includes(q));
+      return nameMatch || skillMatch;
+    })
+    .sort((a, b) => {
+      // Sort by distance ascending (closest first); workers without distance go to the end
+      const distA = a.distance_km ?? Infinity;
+      const distB = b.distance_km ?? Infinity;
+      return distA - distB;
+    });
 
   if (loading) return <LoadingSpinner fullScreen message={t('worker_home.finding_jobs')} />;
 
@@ -102,9 +121,6 @@ export default function FindWorkersScreen() {
 
       <View style={styles.header}>
         <Text style={styles.title}>{t('recruiter_find_workers.title')}</Text>
-        <Text style={styles.subtitle}>
-          {filteredWorkers.length} {t('navigation.workers').toLowerCase()} {APP_CONFIG.DEFAULT_SEARCH_RADIUS_KM}km
-        </Text>
       </View>
 
       <View style={styles.searchContainer}>
@@ -120,14 +136,18 @@ export default function FindWorkersScreen() {
       <FlatList
         data={filteredWorkers}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        renderItem={({ item }) => {
+          const appLang = i18n.language || 'en';
+          const translatedName = item.translations?.[appLang]?.full_name || item.full_name;
+          
+          return (
           <Card style={styles.workerCard}>
             <View style={styles.workerRow}>
               {/* Avatar */}
               <View style={styles.avatarContainer}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>
-                    {(item.full_name || '?')[0].toUpperCase()}
+                    {(translatedName || '?')[0].toUpperCase()}
                   </Text>
                 </View>
                 {item.is_online && <View style={styles.onlineDot} />}
@@ -135,41 +155,21 @@ export default function FindWorkersScreen() {
 
               {/* Info */}
               <View style={styles.workerInfo}>
-                <Text style={styles.workerName}>{item.full_name}</Text>
+                <Text style={styles.workerName}>{translatedName}</Text>
                 <View style={styles.metaRow}>
                   {item.min_wage_floor > 0 && (
                     <Text style={styles.metaText}>
                       {APP_CONFIG.CURRENCY_SYMBOL}{item.min_wage_floor}/day min
                     </Text>
                   )}
-                  {item.distance_km && (
-                    <Text style={styles.metaText}>
-                      📍 {item.distance_km.toFixed(1)}km
+                  {item.distance_km != null && (
+                    <Text style={styles.distanceText}>
+                      📍 {item.distance_km.toFixed(1)} km away
                     </Text>
                   )}
                 </View>
 
-                {/* Skills */}
-                {item.desired_skills && item.desired_skills.length > 0 && (
-                  <View style={styles.skillsRow}>
-                    {item.desired_skills.slice(0, 3).map((skill) => (
-                      <Badge
-                        key={skill}
-                        text={getSkillLabel(skill)}
-                        icon={getSkillIcon(skill)}
-                        variant="primary"
-                        size="sm"
-                      />
-                    ))}
-                    {item.desired_skills.length > 3 && (
-                      <Badge
-                        text={`+${item.desired_skills.length - 3}`}
-                        variant="neutral"
-                        size="sm"
-                      />
-                    )}
-                  </View>
-                )}
+
               </View>
 
               {/* Call */}
@@ -178,7 +178,7 @@ export default function FindWorkersScreen() {
               </TouchableOpacity>
             </View>
           </Card>
-        )}
+        )}}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -186,13 +186,27 @@ export default function FindWorkersScreen() {
             tintColor={Colors.primary[600]} colors={[Colors.primary[600]]} />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>👷</Text>
-            <Text style={styles.emptyTitle}>{t('recruiter_find_workers.no_workers_found')}</Text>
-            <Text style={styles.emptySubtitle}>
-              {t('recruiter_find_workers.try_different_filters')}
-            </Text>
-          </View>
+          !searchQuery.trim() ? (
+            <View style={styles.empty}>
+              <View style={styles.countHighlight}>
+                <Text style={styles.countHighlightText}>{allOnlineCount}</Text>
+              </View>
+              <Text style={styles.emptyTitle}>
+                {t('find_workers.ready_count', { count: allOnlineCount }) || `${allOnlineCount} workers ready for work`}
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {t('find_workers.search_subtitle') || "Type a name or skill to find workers ready for work"}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Text style={styles.emptyIcon}>👷</Text>
+              <Text style={styles.emptyTitle}>{t('recruiter_find_workers.no_workers_found')}</Text>
+              <Text style={styles.emptySubtitle}>
+                {t('recruiter_find_workers.try_different_filters')}
+              </Text>
+            </View>
+          )
         }
       />
     </View>
@@ -241,6 +255,7 @@ const styles = StyleSheet.create({
   workerName: { fontSize: Typography.size.base, fontWeight: '700', color: Colors.light.textPrimary },
   metaRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xxs },
   metaText: { fontSize: Typography.size.xs, color: Colors.neutral[500], fontWeight: '500' },
+  distanceText: { fontSize: Typography.size.xs, color: Colors.accent[500], fontWeight: '600' },
   skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.sm },
 
   callButton: {
@@ -250,8 +265,19 @@ const styles = StyleSheet.create({
   },
   callIcon: { fontSize: 18 },
 
-  empty: { alignItems: 'center', paddingTop: Spacing['5xl'] },
+  empty: { alignItems: 'center', paddingTop: Spacing['3xl'] },
   emptyIcon: { fontSize: 48, marginBottom: Spacing.md },
-  emptyTitle: { fontSize: Typography.size.lg, fontWeight: '700', color: Colors.neutral[700] },
+  emptyTitle: { fontSize: Typography.size.lg, fontWeight: '700', color: Colors.neutral[700], textAlign: 'center' },
   emptySubtitle: { fontSize: Typography.size.base, color: Colors.neutral[500], marginTop: Spacing.xs, textAlign: 'center' },
+  
+  countHighlight: {
+    width: 100, height: 100, borderRadius: 50,
+    backgroundColor: Colors.accent[500] + '15',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: Spacing.xl,
+    borderWidth: 2, borderColor: Colors.accent[500] + '30',
+  },
+  countHighlightText: {
+    fontSize: 42, fontWeight: '900', color: Colors.accent[700],
+  },
 });

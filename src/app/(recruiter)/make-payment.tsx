@@ -74,6 +74,47 @@ export default function MakePaymentScreen() {
       return;
     }
 
+    const processPayment = async () => {
+      setPaying(true);
+
+      // Complete the job
+      const { success: completeSuccess, error: completeError } = await completeJob(jobId);
+      if (!completeSuccess) {
+        setPaying(false);
+        Alert.alert('Error', completeError || 'Failed to complete job');
+        return;
+      }
+
+      // Both Cash and UPI require worker confirmation because we do not receive a server callback from the UPI app
+      const verificationStatus = 'pending';
+
+      // Create the transaction
+      const { data: tx, error: txError } = await createTransaction({
+        jobId: job.id,
+        recruiterId: profile.id,
+        workerId: job.accepted_by,
+        amount: job.payment_amount,
+        paymentMethod: selectedMethod,
+        verificationStatus,
+      });
+
+      setPaying(false);
+
+      if (txError) {
+        Alert.alert('Error', txError || 'Failed to create payment record');
+      } else {
+        const msg = `₹${job.payment_amount} payment via ${selectedMethod} recorded. Waiting for worker confirmation.`;
+          
+        Alert.alert(
+          'Payment Recorded',
+          msg,
+          [
+            { text: 'OK', onPress: () => router.replace('/(recruiter)/home' as any) }
+          ]
+        );
+      }
+    };
+
     if (selectedMethod === 'UPI') {
       // Extract the 10-digit mobile number (strip country code + prefix)
       let mobileNumber = workerPhone ? workerPhone.replace(/\D/g, '') : '';
@@ -90,61 +131,25 @@ export default function MakePaymentScreen() {
         const url = `upi://pay?pa=${mobileNumber}&pn=${encodeURIComponent(workerName)}&am=${job.payment_amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
         
         try {
-          const canOpen = await Linking.canOpenURL(url);
-          if (canOpen) {
-            await Linking.openURL(url);
-          } else {
-            Alert.alert('No UPI App', 'No UPI app found on this device. Please install GPay, PhonePe, or Paytm and try again.');
-            return;
-          }
+          await Linking.openURL(url);
+          // Ask for confirmation after they return from the UPI app
+          Alert.alert(
+            'Confirm Payment',
+            'Did you successfully complete the payment in your UPI app?',
+            [
+              { text: 'No, Cancel', style: 'cancel' },
+              { text: 'Yes, I paid', onPress: () => processPayment() }
+            ]
+          );
         } catch (err) {
-          Alert.alert('UPI Error', 'Could not open UPI app. Please try another payment method.');
-          return;
+          Alert.alert('No UPI App', 'No UPI app found on this device. Please install GPay, PhonePe, or Paytm and try again.');
         }
       } else {
         Alert.alert('Invalid Number', 'Worker phone number is missing or invalid for UPI payment. Please try Cash.');
-        return;
       }
-    }
-
-    setPaying(true);
-
-    // Complete the job
-    const { success: completeSuccess, error: completeError } = await completeJob(jobId);
-    if (!completeSuccess) {
-      setPaying(false);
-      Alert.alert('Error', completeError || 'Failed to complete job');
-      return;
-    }
-
-    const verificationStatus = selectedMethod === 'Cash' ? 'pending' : 'verified';
-
-    // Create the transaction
-    const { data: tx, error: txError } = await createTransaction({
-      jobId: job.id,
-      recruiterId: profile.id,
-      workerId: job.accepted_by,
-      amount: job.payment_amount,
-      paymentMethod: selectedMethod,
-      verificationStatus,
-    });
-
-    setPaying(false);
-
-    if (txError) {
-      Alert.alert('Error', txError || 'Failed to create payment record');
     } else {
-      const msg = selectedMethod === 'Cash' 
-        ? `₹${job.payment_amount} cash payment recorded. Waiting for worker confirmation.`
-        : `₹${job.payment_amount} has been successfully paid via ${selectedMethod}.`;
-        
-      Alert.alert(
-        'Payment Recorded',
-        msg,
-        [
-          { text: 'OK', onPress: () => router.replace('/(recruiter)/wallet' as any) }
-        ]
-      );
+      // For Cash payment, process immediately
+      await processPayment();
     }
   };
 
